@@ -2,14 +2,16 @@
 #define PROJECT_HEADER_H
 
 #include <stdio.h>
+#include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_wifi.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
-static void print_auth_mode(int authmode);
+static char* auth_mode(int authmode);
 #define DEFAULT_SCAN_LIST_SIZE 
 static const char* TAG = "wifi_scan";
+
 
 void wifiScanTask(void *pvParameter)
 {
@@ -21,47 +23,63 @@ void wifiScanTask(void *pvParameter)
         printf("Number of networks found: %d\n", apCount);
         wifi_ap_record_t *wifiApList = (wifi_ap_record_t * )malloc(sizeof(wifi_ap_record_t)*apCount);
         esp_wifi_scan_get_ap_records(&apCount, wifiApList);
-        for(int i = 0; i < apCount; i++) {
-            printf("SSID %d: %s, RSSI: %d\n", i+1, wifiApList[i].ssid, wifiApList[i].rssi);
-            print_auth_mode(wifiApList[i].authmode);
+        printf("__________________________________________________________________________________\n");
+        printf("|  Num  |             SSID              |       RSSI         |      SECURITY       |\n");
+        printf("|_______|_______________________________|____________________|_____________________|\n");
+        for(int i = 0; i < apCount; i++) 
+        {
+            if (i+1 <10)
+            printf("|   %d   |    ", i+1);
+            else printf("|   %d  |    ", i+1);
+            char SSID[100];
+            sprintf(SSID,"%s",wifiApList[i].ssid);
+            char SSID_str[30] = "                              ";
+            for(int j = 0; j < strlen(SSID);j++)
+            {
+            SSID_str[j] = SSID[j];
+            }
+            int SSID_length = strlen(SSID_str);
+            printf("%s  ",SSID_str);
+            printf("      %d        ",wifiApList[i].rssi);
+            printf("     %s \n",auth_mode(wifiApList[i].authmode));
         }
         free(wifiApList);
-        vTaskDelay(pdMS_TO_TICKS(5000)); // Delay 5 seconds before scanning again
+        vTaskDelay(pdMS_TO_TICKS(30000)); // Delay 30 seconds before scanning again
     }
 }
 
-static void print_auth_mode(int authmode)
+static char* auth_mode(int authmode)
 {
     switch (authmode) {
     case WIFI_AUTH_OPEN:
-         ESP_LOGI(TAG, "Authmode \tOPEN\n");
+         return "OPEN";
         break;
     case WIFI_AUTH_OWE:
-         ESP_LOGI(TAG, "Authmode \tOWE\n");
+         return "OWE";
         break;
     case WIFI_AUTH_WEP:
-         ESP_LOGI(TAG, "Authmode \tWEP\n");
+         return "WEP";
         break;
     case WIFI_AUTH_WPA_PSK:
-         ESP_LOGI(TAG, "Authmode \tWPA_PSK\n");
+         return "WPA_PSK";
         break;
     case WIFI_AUTH_WPA2_PSK:
-         ESP_LOGI(TAG, "Authmode \tWPA2_PSK\n");
+         return "WPA2_PSK";
         break;
     case WIFI_AUTH_WPA_WPA2_PSK:
-         ESP_LOGI(TAG, "Authmode \tWPA_WPA2_PSK");
+         return "WPA_WPA2_PSK";
         break;
     case WIFI_AUTH_WPA2_ENTERPRISE:
-         ESP_LOGI(TAG, "Authmode \tWPA2_ENTERPRISE\n");
+         return "WPA2_ENTERPRISE";
         break;
     case WIFI_AUTH_WPA3_PSK:
-         ESP_LOGI(TAG, "Authmode \tWPA3_PSK\n");
+         return "WPA3_PSK";
         break;
     case WIFI_AUTH_WPA2_WPA3_PSK:
-         ESP_LOGI(TAG, "Authmode \tWPA2_WPA3_PSK\n");
+         return "WPA2_WPA3_PSK";
         break;
     default:
-         ESP_LOGI(TAG, "Authmode \tUNKNOWN\n");
+         return "UNKNOWN";
         break;
     }
 }
